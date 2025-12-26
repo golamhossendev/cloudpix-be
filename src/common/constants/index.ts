@@ -4,3 +4,9 @@ export const NODE_ENVS = {
   Test: 'test',
   Production: 'production',
 } as const;
+
+export const CONTAINER_NAMES = {
+  USERS: 'Users',
+  FILES: 'Files',
+  SHARE_LINKS: 'ShareLinks',
+} as const;

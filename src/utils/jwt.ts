@@ -6,7 +6,8 @@ import logger from 'jet-logger';
 ******************************************************************************/
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
+// Set to maximum expiration: 10 years (3650 days)
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '3650d';
 
 /******************************************************************************
                                  Types

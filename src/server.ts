@@ -22,9 +22,10 @@ initializeAppInsights();
 
 // **** Middleware **** //
 
+// CORS configuration - allow all origins
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: '*',
     credentials: true,
   }),
 );
@@ -40,7 +41,6 @@ if (ENV.NodeEnv === NODE_ENVS.Dev) {
 
 // Security
 if (ENV.NodeEnv === NODE_ENVS.Production) {
-  // eslint-disable-next-line n/no-process-env
   if (!process.env.DISABLE_HELMET) {
     app.use(helmet());
   }

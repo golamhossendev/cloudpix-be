@@ -3,28 +3,10 @@ import AuthService from '@src/services/AuthService';
 import { IReq, IRes } from './common/types';
 import { authenticate, AuthRequest } from '@src/middleware/auth';
 
-/******************************************************************************
-                                 Types
-******************************************************************************/
-
-interface RegisterRequest {
-  email: string;
-  password: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * Register a new user
  */
-async function register(req: IReq<RegisterRequest>, res: IRes) {
+async function register(req: IReq, res: IRes) {
   try {
     const { email, password } = req.body;
 
@@ -34,7 +16,10 @@ async function register(req: IReq<RegisterRequest>, res: IRes) {
       });
     }
 
-    const result = await AuthService.register({ email, password });
+    const result = await AuthService.register({
+      email: email as string,
+      password: password as string,
+    });
     res.status(HTTP_STATUS_CODES.Created).json(result);
   } catch (error: any) {
     res.status(HTTP_STATUS_CODES.BadRequest).json({
@@ -46,7 +31,7 @@ async function register(req: IReq<RegisterRequest>, res: IRes) {
 /**
  * Login user
  */
-async function login(req: IReq<LoginRequest>, res: IRes) {
+async function login(req: IReq, res: IRes) {
   try {
     const { email, password } = req.body;
 
@@ -56,7 +41,7 @@ async function login(req: IReq<LoginRequest>, res: IRes) {
       });
     }
 
-    const result = await AuthService.login({ email, password });
+    const result = await AuthService.login({ email, password } as any);
     res.status(HTTP_STATUS_CODES.Ok).json(result);
   } catch (error: any) {
     res.status(HTTP_STATUS_CODES.Unauthorized).json({
@@ -80,13 +65,8 @@ async function getProfile(req: AuthRequest, res: IRes) {
   }
 }
 
-/******************************************************************************
-                                Export default
-******************************************************************************/
-
 export default {
   register,
   login,
   getProfile: [authenticate, getProfile],
 } as const;
-

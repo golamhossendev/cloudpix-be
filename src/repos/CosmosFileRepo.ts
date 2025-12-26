@@ -1,7 +1,8 @@
 import { getContainer } from '@src/services/azure/CosmosService';
-import { CONTAINER_NAMES } from './database';
+
 import { IFile } from '@src/models/File';
 import logger from 'jet-logger';
+import { CONTAINER_NAMES } from '@src/common/constants';
 
 /******************************************************************************
                                  Functions
@@ -14,11 +15,11 @@ export const createFile = async (file: IFile): Promise<IFile> => {
   try {
     const container = await getContainer(CONTAINER_NAMES.FILES, '/fileId');
     const { resource } = await container.items.create(file);
-    
+
     if (!resource) {
       throw new Error('Failed to create file');
     }
-    
+
     return resource as IFile;
   } catch (error) {
     logger.err(error);
@@ -63,7 +64,9 @@ export const getFilesByUserId = async (userId: string): Promise<IFile[]> => {
       ],
     };
 
-    const { resources } = await container.items.query<IFile>(querySpec).fetchAll();
+    const { resources } = await container.items
+      .query<IFile>(querySpec)
+      .fetchAll();
     return resources;
   } catch (error) {
     logger.err(error);
@@ -77,12 +80,14 @@ export const getFilesByUserId = async (userId: string): Promise<IFile[]> => {
 export const updateFile = async (file: IFile): Promise<IFile> => {
   try {
     const container = await getContainer(CONTAINER_NAMES.FILES, '/fileId');
-    const { resource } = await container.item(file.fileId, file.fileId).replace(file);
-    
+    const { resource } = await container
+      .item(file.fileId, file.fileId)
+      .replace(file);
+
     if (!resource) {
       throw new Error('Failed to update file');
     }
-    
+
     return resource as IFile;
   } catch (error) {
     logger.err(error);
@@ -99,7 +104,7 @@ export const deleteFile = async (fileId: string): Promise<void> => {
     if (!file) {
       throw new Error('File not found');
     }
-    
+
     file.status = 'deleted';
     await updateFile(file);
   } catch (error) {
@@ -135,4 +140,3 @@ export default {
   deleteFile,
   hardDeleteFile,
 };
-

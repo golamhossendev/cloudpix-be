@@ -1,11 +1,11 @@
 import { getContainer } from '../services/azure/CosmosService';
 import logger from 'jet-logger';
 
-export const CONTAINER_NAMES = {
+const CONTAINER_NAMES = {
   USERS: 'Users',
   FILES: 'Files',
   SHARE_LINKS: 'ShareLinks',
-} as const;
+};
 
 /**
  * Initialize all Cosmos DB containers
@@ -28,5 +28,3 @@ export async function initializeContainers(): Promise<void> {
     throw new Error('Failed to initialize Cosmos DB containers');
   }
 }
-
-

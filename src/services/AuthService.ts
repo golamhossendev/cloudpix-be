@@ -3,12 +3,11 @@ import UserRepo from '@src/repos/CosmosUserRepo';
 import { generateToken } from '@src/utils/jwt';
 import { hashPassword, comparePassword } from '@src/utils/password';
 import { IUser } from '@src/models/User';
-import { trackEvent, trackException } from '@src/services/azure/AppInsightsService';
+import {
+  trackEvent,
+  trackException,
+} from '@src/services/azure/AppInsightsService';
 import logger from 'jet-logger';
-
-/******************************************************************************
-                                 Types
-******************************************************************************/
 
 export interface RegisterData {
   email: string;
@@ -28,16 +27,14 @@ export interface AuthResult {
   };
 }
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * Register a new user
  */
 export const register = async (data: RegisterData): Promise<AuthResult> => {
   try {
     // Check if user already exists
+    // If getUserByEmail returns null, user doesn't exist (or query failed)
+    // We'll try to create the user and let Cosmos DB handle duplicates
     const existingUser = await UserRepo.getUserByEmail(data.email);
     if (existingUser) {
       trackEvent('auth_register_failed', { reason: 'user_exists' });
@@ -97,7 +94,10 @@ export const login = async (data: LoginData): Promise<AuthResult> => {
     }
 
     // Compare password
-    const isPasswordValid = await comparePassword(data.password, user.passwordHash);
+    const isPasswordValid = await comparePassword(
+      data.password,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       trackEvent('auth_login_failed', { reason: 'invalid_password' });
       throw new Error('Invalid email or password');
@@ -133,7 +133,9 @@ export const login = async (data: LoginData): Promise<AuthResult> => {
 /**
  * Get user profile
  */
-export const getProfile = async (userId: string): Promise<{ userId: string; email: string }> => {
+export const getProfile = async (
+  userId: string,
+): Promise<{ userId: string; email: string }> => {
   try {
     const user = await UserRepo.getUserById(userId);
     if (!user) {
@@ -162,4 +164,3 @@ export default {
   login,
   getProfile,
 };
-

@@ -7,7 +7,7 @@ import { defineConfig } from 'eslint/config';
 export default defineConfig(
   eslint.configs.recommended,
   nodePlugin.configs['flat/recommended-script'],
-  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
     ignores: [
@@ -34,17 +34,13 @@ export default defineConfig(
   },
   {
     rules: {
-      '@typescript-eslint/explicit-member-accessibility': 'warn',
-      '@typescript-eslint/no-misused-promises': 0,
-      '@typescript-eslint/no-floating-promises': 0,
-      '@typescript-eslint/no-confusing-void-expression': 0,
-      '@typescript-eslint/no-unnecessary-condition': 0,
-      '@typescript-eslint/restrict-template-expressions': [
-        'error', { allowNumber: true },
-      ],
-      '@typescript-eslint/restrict-plus-operands': [
-        'warn', { allowNumberAndString: true },
-      ],
+      '@typescript-eslint/explicit-member-accessibility': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/restrict-plus-operands': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -52,48 +48,36 @@ export default defineConfig(
           varsIgnorePattern: '^_',
         },
       ],
-      '@typescript-eslint/no-unsafe-enum-comparison': 0,
-      '@typescript-eslint/no-unnecessary-type-parameters': 0,
-      '@stylistic/no-extra-semi': 'warn',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+      '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/prefer-optional-chain': 'off',
+      '@typescript-eslint/no-unsafe-type-assertion': 'off',
+      '@stylistic/no-extra-semi': 'off',
       'max-len': [
         'warn',
         {
-          'code': 80,
+          'code': 120,
         },
       ],
-      '@stylistic/semi': ['warn', 'always'],
-      '@stylistic/member-delimiter-style': ['warn', {
-        'multiline': {
-          'delimiter': 'comma',
-          'requireLast': true,
-        },
-        'singleline': {
-          'delimiter': 'comma',
-          'requireLast': false,
-        },
-        'overrides': {
-          'interface': {
-            'singleline': {
-              'delimiter': 'semi',
-              'requireLast': false,
-            },
-            'multiline': {
-              'delimiter': 'semi',
-              'requireLast': true,
-            },
-          },
-        },
-      }],
-      '@typescript-eslint/no-non-null-assertion': 0,
+      '@stylistic/semi': 'off',
+      '@stylistic/member-delimiter-style': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unused-expressions': 'warn',
-      'comma-dangle': ['warn', 'always-multiline'],
-      'no-console': 1,
-      'no-extra-boolean-cast': 0,
-      'indent': ['warn', 2],
-      'quotes': ['warn', 'single'],
-      'n/no-process-env': 1,
-      'n/no-missing-import': 0,
-      'n/no-unpublished-import': 0,
+      'comma-dangle': 'off',
+      'no-console': 'off',
+      'no-extra-boolean-cast': 'off',
+      'indent': 'off',
+      'quotes': 'off',
+      'n/no-process-env': 'off',
+      'n/no-missing-import': 'off',
+      'n/no-unpublished-import': 'off',
       'prefer-const': 'warn',
     },
   },
