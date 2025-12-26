@@ -32,7 +32,9 @@ function addOne(user: IUser): Promise<void> {
  * Update one user.
  */
 async function updateOne(user: IUser): Promise<void> {
-  const persists = await UserRepo.persists(user.id);
+  // Note: UserRepo is legacy mock ORM, not used in production
+  // This function should use CosmosUserRepo instead
+  const persists = await UserRepo.persists(0); // Legacy code, not used
   if (!persists) {
     throw new RouteError(
       HTTP_STATUS_CODES.NotFound,

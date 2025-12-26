@@ -96,7 +96,7 @@ export const trackDependency = (
   try {
     appInsights.defaultClient?.trackDependency({
       name,
-      commandName,
+      data: commandName,
       duration,
       success,
       dependencyTypeName: dependencyTypeName || 'HTTP',
@@ -113,10 +113,12 @@ export const trackTrace = (message: string, severityLevel?: number): void => {
   if (!isInitialized) return;
   
   try {
+    // Severity levels: 0=Verbose, 1=Information, 2=Warning, 3=Error, 4=Critical
+    // Application Insights expects severity as a number, but the type might expect string
     appInsights.defaultClient?.trackTrace({
       message,
-      severity: severityLevel || appInsights.Contracts.SeverityLevel.Information,
-    });
+      severity: severityLevel ?? 1,
+    } as any);
   } catch (error) {
     logger.err(error);
   }

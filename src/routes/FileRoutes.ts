@@ -1,6 +1,6 @@
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import FileService from '@src/services/FileService';
-import { IReq, IRes } from './common/types';
+import { IRes } from './common/types';
 import { authenticate, AuthRequest } from '@src/middleware/auth';
 import { upload, validateFileSize, validateFileType } from '@src/middleware/upload';
 
@@ -13,7 +13,12 @@ import { upload, validateFileSize, validateFileType } from '@src/middleware/uplo
  */
 async function uploadFile(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const file = req.file;
 
     if (!file) {
@@ -47,7 +52,12 @@ async function uploadFile(req: AuthRequest, res: IRes) {
  */
 async function getUserFiles(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const files = await FileService.getUserFiles(userId);
     res.status(HTTP_STATUS_CODES.Ok).json({ files });
   } catch (error: any) {
@@ -62,7 +72,12 @@ async function getUserFiles(req: AuthRequest, res: IRes) {
  */
 async function getFileById(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const { id } = req.params;
     const file = await FileService.getFileById(id, userId);
     res.status(HTTP_STATUS_CODES.Ok).json(file);
@@ -81,7 +96,12 @@ async function getFileById(req: AuthRequest, res: IRes) {
  */
 async function deleteFile(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const { id } = req.params;
     await FileService.deleteFile(id, userId);
     res.status(HTTP_STATUS_CODES.Ok).json({ message: 'File deleted successfully' });

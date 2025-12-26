@@ -136,7 +136,7 @@ export const deleteFile = async (fileId: string, userId: string): Promise<void> 
     // Delete from blob storage
     try {
       await deleteBlob(blobName);
-    } catch (error) {
+    } catch {
       logger.warn(`Failed to delete blob ${blobName}, continuing with metadata deletion`);
     }
 

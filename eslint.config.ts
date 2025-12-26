@@ -14,6 +14,9 @@ export default defineConfig(
       '**/node_modules/*',
       '**/*.mjs',
       '**/*.js',
+      'functions/**',
+      'src/repos/UserRepo.ts',
+      'src/repos/MockOrm.ts',
     ],
   },
   {

@@ -1,6 +1,6 @@
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import { IReq, IRes } from './common/types';
-import { trackMetric, trackEvent } from '@src/services/azure/AppInsightsService';
+import { trackEvent } from '@src/services/azure/AppInsightsService';
 
 /******************************************************************************
                                  Functions
@@ -9,7 +9,7 @@ import { trackMetric, trackEvent } from '@src/services/azure/AppInsightsService'
 /**
  * Metrics endpoint (Application Insights hook)
  */
-async function metrics(_: IReq, res: IRes) {
+function metrics(_: IReq, res: IRes) {
   try {
     // This endpoint can be used to manually trigger metrics or events
     // In production, Application Insights will automatically collect metrics
@@ -20,7 +20,7 @@ async function metrics(_: IReq, res: IRes) {
       timestamp: new Date().toISOString(),
       appInsights: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING ? 'configured' : 'not configured',
     });
-  } catch (error: any) {
+  } catch {
     res.status(HTTP_STATUS_CODES.InternalServerError).json({
       error: 'Failed to process metrics',
     });

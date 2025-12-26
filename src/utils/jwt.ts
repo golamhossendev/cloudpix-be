@@ -27,9 +27,10 @@ export interface JWTPayload {
  */
 export const generateToken = (payload: JWTPayload): string => {
   try {
+    // JWT_EXPIRY is a string like '3650d', which is valid for expiresIn
     return jwt.sign(payload, JWT_SECRET, {
       expiresIn: JWT_EXPIRY,
-    });
+    } as jwt.SignOptions);
   } catch (error) {
     logger.err(error);
     throw new Error('Failed to generate token');

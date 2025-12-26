@@ -30,7 +30,10 @@ const getCosmosConfig = (): CosmosConfig => {
   }
 
   if (!endpoint || !key) {
-    throw new Error('Cosmos DB configuration missing. Provide either AZURE_COSMOS_CONNECTION_STRING or COSMOS_DB_ENDPOINT + COSMOS_DB_KEY');
+    throw new Error(
+      'Cosmos DB configuration missing. Provide either ' +
+      'AZURE_COSMOS_CONNECTION_STRING or COSMOS_DB_ENDPOINT + COSMOS_DB_KEY'
+    );
   }
 
   return { endpoint, key, databaseName };
@@ -86,7 +89,7 @@ export const getDatabase = async (): Promise<Database> => {
  */
 export const getContainer = async (
   containerId: string,
-  partitionKey: string = '/id'
+  partitionKey = '/id'
 ): Promise<Container> => {
   const database = await getDatabase();
   

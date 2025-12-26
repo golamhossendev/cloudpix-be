@@ -20,7 +20,12 @@ interface CreateShareLinkRequest {
  */
 async function createShareLink(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const { id: fileId } = req.params;
     if (!fileId || typeof fileId !== 'string') {
       return res.status(HTTP_STATUS_CODES.BadRequest).json({
@@ -85,7 +90,12 @@ async function getFileByShareLink(req: IReq, res: IRes) {
  */
 async function revokeShareLink(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const { linkId } = req.params;
     if (!linkId || typeof linkId !== 'string') {
       return res.status(HTTP_STATUS_CODES.BadRequest).json({
@@ -111,7 +121,12 @@ async function revokeShareLink(req: AuthRequest, res: IRes) {
  */
 async function getShareLinksByFileId(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const { id: fileId } = req.params;
     if (!fileId || typeof fileId !== 'string') {
       return res.status(HTTP_STATUS_CODES.BadRequest).json({

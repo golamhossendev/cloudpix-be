@@ -10,12 +10,10 @@ const DEFAULT_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const ENV = jetEnv({
   NodeEnv: isValueOf(NODE_ENVS),
   Port: num,
-}, {
-  Port: DEFAULT_PORT, // Provide default if PORT is not in .env file
 });
 
-// Ensure Port is always a number
-if (typeof ENV.Port !== 'number') {
+// Ensure Port is always a number, use PORT from env or default
+if (typeof ENV.Port !== 'number' || isNaN(ENV.Port)) {
   ENV.Port = DEFAULT_PORT;
 }
 

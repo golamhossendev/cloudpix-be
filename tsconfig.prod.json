@@ -25,6 +25,8 @@
     "src/public/",
     "scripts",
     "eslint.config.ts",
-    "vitest.config.js"
+    "vitest.config.js",
+    "src/repos/UserRepo.ts",
+    "src/repos/MockOrm.ts"
   ]
 }

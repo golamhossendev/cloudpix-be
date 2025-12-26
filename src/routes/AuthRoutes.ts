@@ -55,7 +55,12 @@ async function login(req: IReq, res: IRes) {
  */
 async function getProfile(req: AuthRequest, res: IRes) {
   try {
-    const userId = req.userId!;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
     const profile = await AuthService.getProfile(userId);
     res.status(HTTP_STATUS_CODES.Ok).json(profile);
   } catch (error: any) {

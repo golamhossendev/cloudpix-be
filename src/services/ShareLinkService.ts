@@ -5,7 +5,6 @@ import { getBlobUrl } from '@src/services/azure/BlobService';
 import { IShareLink } from '@src/models/ShareLink';
 import { trackEvent, trackException } from '@src/services/azure/AppInsightsService';
 import logger from 'jet-logger';
-import ENV from '@src/common/constants/ENV';
 
 /******************************************************************************
                                  Types

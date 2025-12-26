@@ -1,4 +1,4 @@
-import { isString, isUnsignedInteger } from 'jet-validators';
+import { isString, isUnsignedInteger, isValueOf } from 'jet-validators';
 import { parseObject, TParseOnError } from 'jet-validators/utils';
 
 import { transformIsDate } from '@src/common/util/validators';
@@ -34,17 +34,18 @@ const parseFile = parseObject<IFile>({
   fileSize: isUnsignedInteger,
   contentType: isString,
   uploadDate: transformIsDate,
-  status: isString,
+  status: isValueOf({ active: 'active' as const, deleted: 'deleted' as const }),
 });
 
 /**
  * New file object.
  */
 function __new__(file?: Partial<IFile>): IFile {
-  const defaults = { ...DEFAULT_FILE_VALS };
+  const defaults: IFile = { ...DEFAULT_FILE_VALS };
   defaults.uploadDate = new Date();
   defaults.status = 'active';
-  return parseFile({ ...defaults, ...file }, (errors) => {
+  const merged = { ...defaults, ...file };
+  return parseFile(merged, (errors) => {
     throw new Error('Setup new file failed ' + JSON.stringify(errors, null, 2));
   });
 }

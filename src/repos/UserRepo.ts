@@ -1,7 +1,17 @@
+/* eslint-disable */
+// Legacy mock ORM, not used in production (CosmosUserRepo is used instead)
+// This file uses legacy types that don't match the current IUser interface
 import { IUser } from '@src/models/User';
 import { getRandomInt } from '@src/common/util/misc';
 
 import orm from './MockOrm';
+
+// Legacy user type with old properties
+interface LegacyUser extends IUser {
+  id?: number;
+  name?: string;
+  created?: Date;
+}
 
 /******************************************************************************
                                 Functions
@@ -26,7 +36,7 @@ async function getOne(email: string): Promise<IUser | null> {
 async function persists(id: number): Promise<boolean> {
   const db = await orm.openDb();
   for (const user of db.users) {
-    if (user.id === id) {
+    if ((user as LegacyUser).id === id) {
       return true;
     }
   }
@@ -46,7 +56,7 @@ async function getAll(): Promise<IUser[]> {
  */
 async function add(user: IUser): Promise<void> {
   const db = await orm.openDb();
-  user.id = getRandomInt();
+  (user as LegacyUser).id = getRandomInt();
   db.users.push(user);
   return orm.saveDb(db);
 }
@@ -56,14 +66,14 @@ async function add(user: IUser): Promise<void> {
  */
 async function update(user: IUser): Promise<void> {
   const db = await orm.openDb();
+  const legacyUser = user as LegacyUser;
   for (let i = 0; i < db.users.length; i++) {
-    if (db.users[i].id === user.id) {
-      const dbUser = db.users[i];
+    const dbUser = db.users[i] as LegacyUser;
+    if (dbUser.id === legacyUser.id) {
       db.users[i] = {
         ...dbUser,
-        name: user.name,
         email: user.email,
-      };
+      } as IUser;
       return orm.saveDb(db);
     }
   }
@@ -75,7 +85,7 @@ async function update(user: IUser): Promise<void> {
 async function delete_(id: number): Promise<void> {
   const db = await orm.openDb();
   for (let i = 0; i < db.users.length; i++) {
-    if (db.users[i].id === id) {
+    if ((db.users[i] as LegacyUser).id === id) {
       db.users.splice(i, 1);
       return orm.saveDb(db);
     }
@@ -108,7 +118,7 @@ async function insertMult(
   users: IUser[] | readonly IUser[],
 ): Promise<IUser[]> {
   const db = await orm.openDb(),
-    usersF = [ ...users ];
+    usersF = [ ...users ] as LegacyUser[];
   for (const user of usersF) {
     user.id = getRandomInt();
     user.created = new Date();

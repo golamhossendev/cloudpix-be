@@ -10,7 +10,7 @@ const CONTAINER_NAMES = {
 /**
  * Initialize all Cosmos DB containers
  */
-export async function initializeContainers(): Promise<void> {
+ async function initializeContainers(): Promise<void> {
   try {
     // Users container - partition key: userId
     await getContainer(CONTAINER_NAMES.USERS, '/userId');
@@ -28,3 +28,5 @@ export async function initializeContainers(): Promise<void> {
     throw new Error('Failed to initialize Cosmos DB containers');
   }
 }
+
+export default initializeContainers;
