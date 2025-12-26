@@ -1,12 +1,5 @@
+import { getContainer } from '../services/azure/CosmosService';
 import logger from 'jet-logger';
-
-import ENV from '@src/common/constants/ENV';
-import server from './server';
-
-const SERVER_START_MSG =
-  'Express server started on port: ' + ENV.Port.toString();
-
-import { getContainer } from './services/azure/CosmosService';
 
 export const CONTAINER_NAMES = {
   USERS: 'Users',
@@ -36,20 +29,4 @@ export async function initializeContainers(): Promise<void> {
   }
 }
 
-// Initialize Cosmos DB containers
-initializeContainers()
-  .then(() => {
-    // Start the server
-    server.listen(ENV.Port, (err) => {
-      if (!!err) {
-        logger.err(err.message);
-      } else {
-        logger.info(SERVER_START_MSG);
-      }
-    });
-  })
-  .catch((error: unknown) => {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.err(`Failed to initialize database: ${errorMessage}`);
-    throw error;
-  });
+

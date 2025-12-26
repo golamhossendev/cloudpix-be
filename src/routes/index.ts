@@ -2,30 +2,52 @@ import { Router } from 'express';
 
 import PATHS from '@src/common/constants/PATHS';
 import UserRoutes from './UserRoutes';
-
-/******************************************************************************
-                                Setup
-******************************************************************************/
+import AuthRoutes from './AuthRoutes';
+import FileRoutes from './FileRoutes';
+import ShareRoutes from './ShareRoutes';
+import HealthRoutes from './HealthRoutes';
+import MetricsRoutes from './MetricsRoutes';
 
 const apiRouter = Router();
 
+// ** Health & Metrics Routes ** //
+apiRouter.get('/health', HealthRoutes.health);
+apiRouter.get('/metrics', MetricsRoutes.metrics);
 
-// ** Add UserRouter ** //
+// ** Auth Routes ** //
+const authRouter = Router();
+authRouter.post('/register', AuthRoutes.register);
+authRouter.post('/login', AuthRoutes.login);
+authRouter.get('/profile', ...AuthRoutes.getProfile);
+apiRouter.use('/auth', authRouter);
 
-// Init router
+// ** File Routes ** //
+const fileRouter = Router();
+fileRouter.post('/upload', ...FileRoutes.upload);
+fileRouter.get('/', ...FileRoutes.getAll);
+fileRouter.get('/:id', ...FileRoutes.getById);
+fileRouter.delete('/:id', ...FileRoutes.delete);
+apiRouter.use('/files', fileRouter);
+
+// ** Share Routes ** //
+const shareRouter = Router();
+shareRouter.post('/:linkId/revoke', ...ShareRoutes.revoke);
+apiRouter.use('/share', shareRouter);
+
+// Share link access (no auth required)
+apiRouter.get('/share/:linkId', ShareRoutes.getByLinkId);
+
+// File share creation (requires auth)
+const fileShareRouter = Router();
+fileShareRouter.post('/:id/share', ...ShareRoutes.create);
+apiRouter.use('/files', fileShareRouter);
+
+// ** User Routes (legacy - keeping for compatibility) ** //
 const userRouter = Router();
-
-// Get all users
 userRouter.get(PATHS.Users.Get, UserRoutes.getAll);
 userRouter.post(PATHS.Users.Add, UserRoutes.add);
 userRouter.put(PATHS.Users.Update, UserRoutes.update);
 userRouter.delete(PATHS.Users.Delete, UserRoutes.delete);
-
-// Add UserRouter
 apiRouter.use(PATHS.Users._, userRouter);
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default apiRouter;

@@ -4,3 +4,6 @@ temp/
 **/**/*.log
 config.js
 tsconfig.tsbuildinfo
+.env
+config/.env.*
+!.env.example

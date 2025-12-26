@@ -1,27 +1,22 @@
-import { isString, isUnsignedInteger } from 'jet-validators';
+import { isString } from 'jet-validators';
 import { parseObject, TParseOnError } from 'jet-validators/utils';
 
 import { transformIsDate } from '@src/common/util/validators';
-import { IModel } from './common/types';
-
-/******************************************************************************
-                                 Constants
-******************************************************************************/
 
 const DEFAULT_USER_VALS: IUser = {
-  id: 0,
-  name: '',
-  created: new Date(),
+  userId: '',
   email: '',
+  passwordHash: '',
+  createdDate: new Date(),
+  lastLogin: undefined,
 } as const;
 
-/******************************************************************************
-                                  Types
-******************************************************************************/
-
-export interface IUser extends IModel {
-  name: string;
-  email: string;
+export interface IUser {
+  userId: string; // GUID, partition key
+  email: string; // unique, indexed
+  passwordHash: string;
+  createdDate: Date;
+  lastLogin?: Date;
 }
 
 /******************************************************************************
@@ -30,10 +25,11 @@ export interface IUser extends IModel {
 
 // Initialize the "parseUser" function
 const parseUser = parseObject<IUser>({
-  id: isUnsignedInteger,
-  name: isString,
+  userId: isString,
   email: isString,
-  created: transformIsDate,
+  passwordHash: isString,
+  createdDate: transformIsDate,
+  lastLogin: (arg: unknown) => arg === undefined || transformIsDate(arg),
 });
 
 /******************************************************************************
@@ -45,7 +41,7 @@ const parseUser = parseObject<IUser>({
  */
 function __new__(user?: Partial<IUser>): IUser {
   const defaults = { ...DEFAULT_USER_VALS };
-  defaults.created = new Date();
+  defaults.createdDate = new Date();
   return parseUser({ ...defaults, ...user }, errors => {
     throw new Error('Setup new user failed ' + JSON.stringify(errors, null, 2));
   });

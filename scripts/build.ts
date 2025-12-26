@@ -1,13 +1,6 @@
 import logger from 'jet-logger';
 import { copy, copyFilesRec, exec, remove } from './common/utils';
 
-/******************************************************************************
-                                  Run
-******************************************************************************/
-
-/**
- * Start
- */
 (async () => {
   try {
     // Remove current build
@@ -25,4 +18,3 @@ import { copy, copyFilesRec, exec, remove } from './common/utils';
     process.exit(1);
   }
 })();
-

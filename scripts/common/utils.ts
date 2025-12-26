@@ -3,17 +3,10 @@ import logger from 'jet-logger';
 import childProcess from 'child_process';
 import path from 'path';
 
-/******************************************************************************
-                                Functions
-*******************************************************************************
-
-/**
- * Copy file.
- */
 export function copy(src: string, dest: string): Promise<void> {
   return new Promise((res, rej) => {
-    return fs.copy(src, dest, err => {
-      return (!!err ? rej(err) : res());
+    return fs.copy(src, dest, (err) => {
+      return !!err ? rej(err) : res();
     });
   });
 }
@@ -23,8 +16,8 @@ export function copy(src: string, dest: string): Promise<void> {
  */
 export function remove(loc: string): Promise<void> {
   return new Promise((res, rej) => {
-    return fs.remove(loc, err => {
-      return (!!err ? rej(err) : res());
+    return fs.remove(loc, (err) => {
+      return !!err ? rej(err) : res();
     });
   });
 }
@@ -52,24 +45,24 @@ export function exec(cmd: string, loc = './'): Promise<string> {
       } else {
         return res(stdout);
       }
-    }),
+    })
   );
 }
 
 /**
- * Recursively search for a folder for all files and copy them to the new 
+ * Recursively search for a folder for all files and copy them to the new
  * destination keeping their paths relative to the "src" param.
- * 
- * Example: 
+ *
+ * Example:
  *  If file "./src/foo/bar.txt" exists then:
  *  copyFilesRec('./src', './dest') => ["./dest/foo/bar.txt"]
- * 
+ *
  * @param excludeExt Exlude a list of file extensions.
  */
 export async function copyFilesRec(
   src: string,
   dest: string,
-  excludeExt?: string[],
+  excludeExt?: string[]
 ): Promise<void> {
   const copyReqs: Promise<void>[] = [];
   try {

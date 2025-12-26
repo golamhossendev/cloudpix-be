@@ -4,10 +4,6 @@ import HTTP_STATUS_CODES, {
   HttpStatusCodes,
 } from '@src/common/constants/HTTP_STATUS_CODES';
 
-/******************************************************************************
-                                 Classes
-******************************************************************************/
-
 /**
  * Error with status code and message.
  */
@@ -24,9 +20,8 @@ export class RouteError extends Error {
  * Handle "parseObj" errors.
  */
 export class ValidationError extends RouteError {
-
-  public static MESSAGE = 'The parseObj() function discovered one or ' + 
-    'more errors.';
+  public static MESSAGE =
+    'The parseObj() function discovered one or ' + 'more errors.';
 
   public constructor(errors: IParseObjectError[]) {
     const msg = JSON.stringify({
