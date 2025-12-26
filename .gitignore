@@ -6,4 +6,5 @@ config.js
 tsconfig.tsbuildinfo
 .env
 config/.env.*
+!config/.env.*.example
 !.env.example
