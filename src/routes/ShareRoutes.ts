@@ -22,6 +22,11 @@ async function createShareLink(req: AuthRequest, res: IRes) {
   try {
     const userId = req.userId!;
     const { id: fileId } = req.params;
+    if (!fileId || typeof fileId !== 'string') {
+      return res.status(HTTP_STATUS_CODES.BadRequest).json({
+        error: 'File ID is required',
+      });
+    }
     const { expirationDays } = req.body as CreateShareLinkRequest;
 
     const shareLink = await ShareLinkService.createShareLink({
@@ -30,7 +35,14 @@ async function createShareLink(req: AuthRequest, res: IRes) {
       expirationDays,
     });
 
-    res.status(HTTP_STATUS_CODES.Created).json(shareLink);
+    // Generate share URL (public URL that can be shared)
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const shareUrl = `${frontendUrl}/share/${shareLink.linkId}`;
+
+    res.status(HTTP_STATUS_CODES.Created).json({
+      ...shareLink,
+      shareUrl, // Include the shareable URL
+    });
   } catch (error: any) {
     const status = error.message.includes('not found') 
       ? HTTP_STATUS_CODES.NotFound 
@@ -49,6 +61,11 @@ async function createShareLink(req: AuthRequest, res: IRes) {
 async function getFileByShareLink(req: IReq, res: IRes) {
   try {
     const { linkId } = req.params;
+    if (!linkId || typeof linkId !== 'string') {
+      return res.status(HTTP_STATUS_CODES.BadRequest).json({
+        error: 'Link ID is required',
+      });
+    }
     const result = await ShareLinkService.getFileByShareLink(linkId);
     res.status(HTTP_STATUS_CODES.Ok).json(result);
   } catch (error: any) {
@@ -70,6 +87,11 @@ async function revokeShareLink(req: AuthRequest, res: IRes) {
   try {
     const userId = req.userId!;
     const { linkId } = req.params;
+    if (!linkId || typeof linkId !== 'string') {
+      return res.status(HTTP_STATUS_CODES.BadRequest).json({
+        error: 'Link ID is required',
+      });
+    }
     await ShareLinkService.revokeShareLink(linkId, userId);
     res.status(HTTP_STATUS_CODES.Ok).json({ message: 'Share link revoked successfully' });
   } catch (error: any) {
@@ -84,6 +106,41 @@ async function revokeShareLink(req: AuthRequest, res: IRes) {
   }
 }
 
+/**
+ * Get all share links for a file
+ */
+async function getShareLinksByFileId(req: AuthRequest, res: IRes) {
+  try {
+    const userId = req.userId!;
+    const { id: fileId } = req.params;
+    if (!fileId || typeof fileId !== 'string') {
+      return res.status(HTTP_STATUS_CODES.BadRequest).json({
+        error: 'File ID is required',
+      });
+    }
+    
+    const shareLinks = await ShareLinkService.getShareLinksByFileId(fileId, userId);
+    
+    // Add share URLs to each link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const shareLinksWithUrls = shareLinks.map(link => ({
+      ...link,
+      shareUrl: `${frontendUrl}/share/${link.linkId}`,
+    }));
+
+    res.status(HTTP_STATUS_CODES.Ok).json({ shareLinks: shareLinksWithUrls });
+  } catch (error: any) {
+    const status = error.message.includes('not found') 
+      ? HTTP_STATUS_CODES.NotFound 
+      : error.message.includes('Unauthorized')
+      ? HTTP_STATUS_CODES.Unauthorized
+      : HTTP_STATUS_CODES.BadRequest;
+    res.status(status).json({
+      error: error.message || 'Failed to get share links',
+    });
+  }
+}
+
 /******************************************************************************
                                 Export default
 ******************************************************************************/
@@ -92,5 +149,6 @@ export default {
   create: [authenticate, createShareLink],
   getByLinkId: getFileByShareLink,
   revoke: [authenticate, revokeShareLink],
+  getByFileId: [authenticate, getShareLinksByFileId],
 } as const;
 

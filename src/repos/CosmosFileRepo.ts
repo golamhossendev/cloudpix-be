@@ -33,8 +33,19 @@ export const createFile = async (file: IFile): Promise<IFile> => {
 export const getFileById = async (fileId: string): Promise<IFile | null> => {
   try {
     const container = await getContainer(CONTAINER_NAMES.FILES, '/fileId');
-    const { resource } = await container.item(fileId, fileId).read<IFile>();
-    return resource || null;
+    // Query by fileId since Cosmos DB auto-generates 'id' field
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.fileId = @fileId',
+      parameters: [
+        {
+          name: '@fileId',
+          value: fileId,
+        },
+      ],
+    };
+
+    const { resources } = await container.items.query<IFile>(querySpec).fetchAll();
+    return resources.length > 0 ? resources[0] : null;
   } catch (error: any) {
     if (error.code === 404) {
       return null;
@@ -80,8 +91,16 @@ export const getFilesByUserId = async (userId: string): Promise<IFile[]> => {
 export const updateFile = async (file: IFile): Promise<IFile> => {
   try {
     const container = await getContainer(CONTAINER_NAMES.FILES, '/fileId');
+    // Fetch existing file to get its Cosmos DB 'id'
+    const existingFile = await getFileById(file.fileId);
+    if (!existingFile) {
+      throw new Error('File not found for update');
+    }
+
+    // Use the existing Cosmos DB 'id' for the replace operation
+    const cosmosId = (existingFile as any).id || file.fileId;
     const { resource } = await container
-      .item(file.fileId, file.fileId)
+      .item(cosmosId, file.fileId) // Use cosmosId for item ID, file.fileId for partition key
       .replace(file);
 
     if (!resource) {
@@ -119,7 +138,15 @@ export const deleteFile = async (fileId: string): Promise<void> => {
 export const hardDeleteFile = async (fileId: string): Promise<void> => {
   try {
     const container = await getContainer(CONTAINER_NAMES.FILES, '/fileId');
-    await container.item(fileId, fileId).delete();
+    // Fetch existing file to get its Cosmos DB 'id'
+    const existingFile = await getFileById(fileId);
+    if (!existingFile) {
+      return; // File doesn't exist, nothing to delete
+    }
+
+    // Use the existing Cosmos DB 'id' for the delete operation
+    const cosmosId = (existingFile as any).id || fileId;
+    await container.item(cosmosId, fileId).delete();
   } catch (error: any) {
     if (error.code !== 404) {
       logger.err(error);

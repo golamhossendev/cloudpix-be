@@ -1,7 +1,8 @@
 import { getContainer } from '@src/services/azure/CosmosService';
-import { CONTAINER_NAMES } from './database';
+
 import { IShareLink } from '@src/models/ShareLink';
 import logger from 'jet-logger';
+import { CONTAINER_NAMES } from '@src/common/constants';
 
 /******************************************************************************
                                  Functions
@@ -10,15 +11,20 @@ import logger from 'jet-logger';
 /**
  * Create a new share link
  */
-export const createShareLink = async (shareLink: IShareLink): Promise<IShareLink> => {
+export const createShareLink = async (
+  shareLink: IShareLink,
+): Promise<IShareLink> => {
   try {
-    const container = await getContainer(CONTAINER_NAMES.SHARE_LINKS, '/linkId');
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
     const { resource } = await container.items.create(shareLink);
-    
+
     if (!resource) {
       throw new Error('Failed to create share link');
     }
-    
+
     return resource as IShareLink;
   } catch (error) {
     logger.err(error);
@@ -29,11 +35,30 @@ export const createShareLink = async (shareLink: IShareLink): Promise<IShareLink
 /**
  * Get share link by linkId
  */
-export const getShareLinkById = async (linkId: string): Promise<IShareLink | null> => {
+export const getShareLinkById = async (
+  linkId: string,
+): Promise<IShareLink | null> => {
   try {
-    const container = await getContainer(CONTAINER_NAMES.SHARE_LINKS, '/linkId');
-    const { resource } = await container.item(linkId, linkId).read<IShareLink>();
-    return resource || null;
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
+    // Query by linkId (partition key) instead of using item(id, partitionKey)
+    // because Cosmos DB auto-generates an 'id' field that differs from linkId
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.linkId = @linkId',
+      parameters: [
+        {
+          name: '@linkId',
+          value: linkId,
+        },
+      ],
+    };
+
+    const { resources } = await container.items
+      .query<IShareLink>(querySpec)
+      .fetchAll();
+    return resources.length > 0 ? resources[0] : null;
   } catch (error: any) {
     if (error.code === 404) {
       return null;
@@ -46,11 +71,17 @@ export const getShareLinkById = async (linkId: string): Promise<IShareLink | nul
 /**
  * Get all share links for a file
  */
-export const getShareLinksByFileId = async (fileId: string): Promise<IShareLink[]> => {
+export const getShareLinksByFileId = async (
+  fileId: string,
+): Promise<IShareLink[]> => {
   try {
-    const container = await getContainer(CONTAINER_NAMES.SHARE_LINKS, '/linkId');
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
     const querySpec = {
-      query: 'SELECT * FROM c WHERE c.fileId = @fileId AND c.isRevoked = @isRevoked',
+      query:
+        'SELECT * FROM c WHERE c.fileId = @fileId AND c.isRevoked = @isRevoked',
       parameters: [
         {
           name: '@fileId',
@@ -63,7 +94,9 @@ export const getShareLinksByFileId = async (fileId: string): Promise<IShareLink[
       ],
     };
 
-    const { resources } = await container.items.query<IShareLink>(querySpec).fetchAll();
+    const { resources } = await container.items
+      .query<IShareLink>(querySpec)
+      .fetchAll();
     return resources;
   } catch (error) {
     logger.err(error);
@@ -74,17 +107,32 @@ export const getShareLinksByFileId = async (fileId: string): Promise<IShareLink[
 /**
  * Update share link
  */
-export const updateShareLink = async (shareLink: IShareLink): Promise<IShareLink> => {
+export const updateShareLink = async (
+  shareLink: IShareLink,
+): Promise<IShareLink> => {
   try {
-    const container = await getContainer(CONTAINER_NAMES.SHARE_LINKS, '/linkId');
-    const { resource } = await container.item(shareLink.linkId, shareLink.linkId).replace(shareLink);
-    
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
+    // First, get the share link to find the Cosmos DB 'id' field
+    const existingLink = await getShareLinkById(shareLink.linkId);
+    if (!existingLink) {
+      throw new Error('Share link not found');
+    }
+
+    // Use the Cosmos DB 'id' field for the replace operation
+    const cosmosId = (existingLink as any).id || shareLink.linkId;
+    const { resource } = await container
+      .item(cosmosId, shareLink.linkId)
+      .replace(shareLink);
+
     if (!resource) {
       throw new Error('Failed to update share link');
     }
-    
+
     return resource as IShareLink;
-  } catch (error) {
+  } catch (error: any) {
     logger.err(error);
     throw new Error('Failed to update share link');
   }
@@ -99,7 +147,7 @@ export const revokeShareLink = async (linkId: string): Promise<void> => {
     if (!shareLink) {
       throw new Error('Share link not found');
     }
-    
+
     shareLink.isRevoked = true;
     await updateShareLink(shareLink);
   } catch (error) {
@@ -117,7 +165,7 @@ export const incrementAccessCount = async (linkId: string): Promise<void> => {
     if (!shareLink) {
       throw new Error('Share link not found');
     }
-    
+
     shareLink.accessCount = (shareLink.accessCount || 0) + 1;
     await updateShareLink(shareLink);
   } catch (error) {
@@ -129,14 +177,24 @@ export const incrementAccessCount = async (linkId: string): Promise<void> => {
 /**
  * Delete all share links for a file (cascade delete)
  */
-export const deleteShareLinksByFileId = async (fileId: string): Promise<void> => {
+export const deleteShareLinksByFileId = async (
+  fileId: string,
+): Promise<void> => {
   try {
     const shareLinks = await getShareLinksByFileId(fileId);
-    
-    const container = await getContainer(CONTAINER_NAMES.SHARE_LINKS, '/linkId');
-    
+
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
+
     for (const link of shareLinks) {
-      await container.item(link.linkId, link.linkId).delete();
+      // Get the Cosmos DB 'id' field
+      const existingLink = await getShareLinkById(link.linkId);
+      if (existingLink) {
+        const cosmosId = (existingLink as any).id || link.linkId;
+        await container.item(cosmosId, link.linkId).delete();
+      }
     }
   } catch (error) {
     logger.err(error);
@@ -151,11 +209,11 @@ export const isShareLinkValid = (shareLink: IShareLink): boolean => {
   if (shareLink.isRevoked) {
     return false;
   }
-  
+
   if (shareLink.expiryDate && new Date(shareLink.expiryDate) < new Date()) {
     return false;
   }
-  
+
   return true;
 };
 
@@ -173,4 +231,3 @@ export default {
   deleteShareLinksByFileId,
   isShareLinkValid,
 };
-

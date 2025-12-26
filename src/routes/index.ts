@@ -37,9 +37,10 @@ apiRouter.use('/share', shareRouter);
 // Share link access (no auth required)
 apiRouter.get('/share/:linkId', ShareRoutes.getByLinkId);
 
-// File share creation (requires auth)
+// File share creation and listing (requires auth)
 const fileShareRouter = Router();
 fileShareRouter.post('/:id/share', ...ShareRoutes.create);
+fileShareRouter.get('/:id/share-links', ...ShareRoutes.getByFileId);
 apiRouter.use('/files', fileShareRouter);
 
 // ** User Routes (legacy - keeping for compatibility) ** //

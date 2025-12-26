@@ -1,9 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import ShareLinkRepo from '@src/repos/CosmosShareLinkRepo';
 import FileRepo from '@src/repos/CosmosFileRepo';
+import { getBlobUrl } from '@src/services/azure/BlobService';
 import { IShareLink } from '@src/models/ShareLink';
 import { trackEvent, trackException } from '@src/services/azure/AppInsightsService';
 import logger from 'jet-logger';
+import ENV from '@src/common/constants/ENV';
 
 /******************************************************************************
                                  Types
@@ -74,6 +76,7 @@ export const createShareLink = async (
     const shareLink: IShareLink = {
       linkId: uuidv4(),
       fileId: data.fileId,
+      userId: data.userId, // Store file owner
       expiryDate: expiryDate || new Date(), // Set to future date or current if never expires
       accessCount: 0,
       createdDate: new Date(),
@@ -102,11 +105,12 @@ export const createShareLink = async (
 };
 
 /**
- * Get file via share link
+ * Get file via share link and generate SAS URL for blob access
  */
 export const getFileByShareLink = async (linkId: string): Promise<{
   file: any;
   shareLink: IShareLink;
+  downloadUrl: string; // SAS URL for blob access
 }> => {
   try {
     const shareLink = await ShareLinkRepo.getShareLinkById(linkId);
@@ -126,6 +130,22 @@ export const getFileByShareLink = async (linkId: string): Promise<{
       throw new Error('File not found or deleted');
     }
 
+    // Extract blob name from blobUrl
+    // blobUrl format: https://account.blob.core.windows.net/container/userId/fileId/fileName?sv=...&sig=...
+    // Remove query parameters first, then extract path
+    const urlWithoutQuery = file.blobUrl.split('?')[0];
+    const blobUrlParts = urlWithoutQuery.split('/');
+    // Get last 3 parts: userId/fileId/fileName (skip container name)
+    const containerIndex = blobUrlParts.findIndex(part => part.includes('.blob.core.windows.net'));
+    const blobName = blobUrlParts.slice(containerIndex + 2).join('/'); // Skip account and container
+
+    // Generate SAS URL with expiration matching share link expiry or 24 hours, whichever is shorter
+    const now = new Date();
+    const expiryDate = new Date(shareLink.expiryDate);
+    const hoursUntilExpiry = Math.max(1, Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60)));
+    const sasExpirationHours = Math.min(hoursUntilExpiry, 24); // Max 24 hours, or until share link expires
+    const sasUrl = getBlobUrl(blobName, sasExpirationHours);
+
     // Increment access count
     await ShareLinkRepo.incrementAccessCount(linkId);
 
@@ -137,6 +157,7 @@ export const getFileByShareLink = async (linkId: string): Promise<{
     return {
       file,
       shareLink,
+      downloadUrl: sasUrl,
     };
   } catch (error: any) {
     trackException(error instanceof Error ? error : new Error(String(error)), {
@@ -162,9 +183,8 @@ export const revokeShareLink = async (
       throw new Error('Share link not found');
     }
 
-    // Verify file ownership
-    const file = await FileRepo.getFileById(shareLink.fileId);
-    if (!file || file.userId !== userId) {
+    // Verify file ownership using userId stored in share link
+    if (shareLink.userId !== userId) {
       throw new Error('Unauthorized access');
     }
 
@@ -186,6 +206,44 @@ export const revokeShareLink = async (
   }
 };
 
+/**
+ * Get all share links for a file
+ */
+export const getShareLinksByFileId = async (
+  fileId: string,
+  userId: string
+): Promise<IShareLink[]> => {
+  try {
+    // Verify file exists and user owns it
+    const file = await FileRepo.getFileById(fileId);
+    if (!file) {
+      throw new Error('File not found');
+    }
+
+    if (file.userId !== userId) {
+      throw new Error('Unauthorized access to file');
+    }
+
+    const shareLinks = await ShareLinkRepo.getShareLinksByFileId(fileId);
+    
+    trackEvent('share_links_listed', {
+      userId,
+      fileId,
+      count: String(shareLinks.length),
+    });
+
+    return shareLinks;
+  } catch (error: any) {
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      operation: 'get_share_links_by_file_id',
+      fileId,
+      userId,
+    });
+    logger.err(error);
+    throw error;
+  }
+};
+
 /******************************************************************************
                             Export default
 ******************************************************************************/
@@ -194,5 +252,6 @@ export default {
   createShareLink,
   getFileByShareLink,
   revokeShareLink,
+  getShareLinksByFileId,
 };
 

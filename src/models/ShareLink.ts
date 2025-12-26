@@ -10,6 +10,7 @@ import { transformIsDate } from '@src/common/util/validators';
 const DEFAULT_SHARE_LINK_VALS: IShareLink = {
   linkId: '',
   fileId: '',
+  userId: '', // File owner
   expiryDate: new Date(),
   accessCount: 0,
   createdDate: new Date(),
@@ -23,6 +24,7 @@ const DEFAULT_SHARE_LINK_VALS: IShareLink = {
 export interface IShareLink {
   linkId: string; // GUID, partition key
   fileId: string; // FK → Files.fileId
+  userId: string; // File owner (FK → Users.userId)
   expiryDate: Date;
   accessCount: number;
   createdDate: Date;
@@ -38,6 +40,7 @@ export interface IShareLink {
 const parseShareLink = parseObject<IShareLink>({
   linkId: isString,
   fileId: isString,
+  userId: isString,
   expiryDate: transformIsDate,
   accessCount: isUnsignedInteger,
   createdDate: transformIsDate,
