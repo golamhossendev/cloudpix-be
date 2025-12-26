@@ -20,7 +20,11 @@ jobs:
         with:
           node-version: '24.x'
 
-      - name: Install, build, and test
+      - name: Install dependencies (including devDependencies for build)
+        # Install all dependencies including devDependencies (needed for ts-node, typescript, etc.)
+        run: npm ci
+
+      - name: Build
         env:
           NODE_ENV: production
           CI: true
@@ -37,7 +41,6 @@ jobs:
           APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
           PORT: ${{ secrets.PORT || '8080' }}
         run: |
-          npm install
           npm run build --if-present
           npm run test --if-present
 
