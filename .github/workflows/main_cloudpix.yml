@@ -9,143 +9,52 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  NODE_VERSION: '18.x'  # Match package.json engines requirement
-  AZURE_WEBAPP_NAME: 'cloudpix'  # Your Azure App Service name
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          node-version: '24.x'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linter
-        run: npm run lint
-        continue-on-error: true  # Don't fail deployment on lint errors
-
-      - name: Build application
-        run: npm run build
-
-      - name: Prepare deployment package
+      - name: npm install, build, and test
         run: |
-          # Create deployment directory
-          mkdir -p deploy
-          
-          # Copy built files
-          cp -r dist deploy/
-          cp config.js deploy/ 2>/dev/null || echo "config.js not found, will be generated"
-          
-          # Copy package files
-          cp package.json deploy/
-          cp package-lock.json deploy/
-          
-          # Create config directory structure (but don't copy .env files)
-          mkdir -p deploy/config
-          
-          # Install production dependencies only
-          cd deploy
-          npm ci --production --ignore-scripts
-          
-          # Create minimal package.json with start script for Azure
-          cat > package.json << 'PKGEOF'
-          {
-            "name": "backend",
-            "version": "0.0.0",
-            "scripts": {
-              "start": "node -r ./config.js ./dist/index.js"
-            },
-            "engines": {
-              "node": ">=16.0.0"
-            }
-          }
-          PKGEOF
-          
-          # Create .deployment file for Azure
-          cat > .deployment << 'DEPEOF'
-          [config]
-          SCM_DO_BUILD_DURING_DEPLOYMENT=false
-          COMMAND=build
-          DEPEOF
-          
-          # Create startup script for Linux App Service
-          cat > startup.sh << 'STARTOF'
-          #!/bin/bash
-          cd /home/site/wwwroot
-          node -r ./config.js ./dist/index.js
-          STARTOF
-          chmod +x startup.sh
-          
-          # Create web.config for Windows App Service (if needed)
-          cat > web.config << 'WEBCONFIGEOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <system.webServer>
-              <handlers>
-                <add name="iisnode" path="dist/index.js" verb="*" modules="iisnode"/>
-              </handlers>
-              <rewrite>
-                <rules>
-                  <rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true">
-                    <match url="^dist/index.js\/debug[\/]?" />
-                  </rule>
-                  <rule name="StaticContent">
-                    <action type="Rewrite" url="public{REQUEST_URI}"/>
-                  </rule>
-                  <rule name="DynamicContent">
-                    <conditions>
-                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
-                    </conditions>
-                    <action type="Rewrite" url="dist/index.js"/>
-                  </rule>
-                </rules>
-              </rewrite>
-              <security>
-                <requestFiltering>
-                  <hiddenSegments>
-                    <remove segment="bin"/>
-                  </hiddenSegments>
-                </requestFiltering>
-              </security>
-              <httpErrors existingResponse="PassThrough" />
-              <iisnode watchedFiles="*.js;*.json" />
-            </system.webServer>
-          </configuration>
-          WEBCONFIGEOF
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: deploy
+          path: |
+            .
+            !node_modules/**
+            !**/.git/**
+            !**/.github/**
+            !**/tests/**
+            !**/cypress/**
+            !**/docs/**
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: .
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -157,30 +66,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: 'cloudpix'
           slot-name: 'Production'
           package: .
-
-      - name: Verify deployment
-        run: |
-          echo "✅ Deployment completed successfully!"
-          echo "🌐 App URL: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-          echo ""
-          echo "⚠️  IMPORTANT: Configure the following App Settings in Azure Portal:"
-          echo "   Go to: Azure Portal > App Service > Configuration > Application settings"
-          echo ""
-          echo "Required Settings:"
-          echo "  - NODE_ENV=production"
-          echo "  - PORT=8080 (optional - Azure sets this automatically)"
-          echo "  - AZURE_COSMOS_CONNECTION_STRING (or COSMOS_DB_ENDPOINT + COSMOS_DB_KEY)"
-          echo "  - COSMOS_DB_NAME=CloudPixDB"
-          echo "  - AZURE_BLOB_CONNECTION_STRING"
-          echo "  - BLOB_CONTAINER_NAME=cloudpix-files"
-          echo "  - JWT_SECRET (use a strong random string)"
-          echo "  - JWT_EXPIRY=3650d"
-          echo ""
-          echo "Optional Settings:"
-          echo "  - APPLICATIONINSIGHTS_CONNECTION_STRING"
-          echo "  - FRONTEND_URL (for CORS and share links)"
-          echo ""
-          echo "📖 See backend/AZURE_DEPLOYMENT.md for detailed instructions"
+          startup-command: 'npm start'
