@@ -21,22 +21,25 @@ jobs:
           node-version: '24.x'
 
       - name: Install, build, and test
+        env:
+          NODE_ENV: production
+          CI: true
+          # Optional: Set these if you want to test the build with actual values
+          # Otherwise, they'll be set in Azure App Service App Settings
+          AZURE_COSMOS_CONNECTION_STRING: ${{ secrets.AZURE_COSMOS_CONNECTION_STRING }}
+          COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
+          COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
+          COSMOS_DB_NAME: ${{ secrets.COSMOS_DB_NAME || 'CloudPixDB' }}
+          AZURE_BLOB_CONNECTION_STRING: ${{ secrets.AZURE_BLOB_CONNECTION_STRING }}
+          BLOB_CONTAINER_NAME: ${{ secrets.BLOB_CONTAINER_NAME || 'cloudpix-files' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'temp-secret-for-build-only' }}
+          JWT_EXPIRY: ${{ secrets.JWT_EXPIRY || '3650d' }}
+          APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+          PORT: ${{ secrets.PORT || '8080' }}
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
-        env:
-          AZURE_COSMOS_CONNECTION_STRING: ${{ secrets.AZURE_COSMOS_CONNECTION_STRING }}
-          COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
-          COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
-          COSMOS_DB_NAME: ${{ secrets.COSMOS_DB_NAME }}
-          AZURE_BLOB_CONNECTION_STRING: ${{ secrets.AZURE_BLOB_CONNECTION_STRING }}
-          BLOB_CONTAINER_NAME: ${{ secrets.BLOB_CONTAINER_NAME }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRY: ${{ secrets.JWT_EXPIRY }}
-          APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
-          PORT: ${{ secrets.PORT }}
-          NODE_ENV: ${{ secrets.NODE_ENV }}
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
