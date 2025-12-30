@@ -243,6 +243,31 @@ export const getShareLinksByFileId = async (
   }
 };
 
+/**
+ * Get all share links for a user
+ */
+export const getUserShareLinks = async (
+  userId: string
+): Promise<IShareLink[]> => {
+  try {
+    const shareLinks = await ShareLinkRepo.getShareLinksByUserId(userId);
+    
+    trackEvent('user_share_links_listed', {
+      userId,
+      count: String(shareLinks.length),
+    });
+
+    return shareLinks;
+  } catch (error: any) {
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      operation: 'get_user_share_links',
+      userId,
+    });
+    logger.err(error);
+    throw error;
+  }
+};
+
 /******************************************************************************
                             Export default
 ******************************************************************************/
@@ -252,5 +277,6 @@ export default {
   getFileByShareLink,
   revokeShareLink,
   getShareLinksByFileId,
+  getUserShareLinks,
 };
 

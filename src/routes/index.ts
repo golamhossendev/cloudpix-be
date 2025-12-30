@@ -37,6 +37,7 @@ apiRouter.use('/files', fileRouter);
 // ** Share Routes ** //
 const shareRouter = Router();
 shareRouter.post('/:linkId/revoke', ...ShareRoutes.revoke);
+shareRouter.get('/user', ...ShareRoutes.getUserShareLinks);
 apiRouter.use('/share', shareRouter);
 
 // Share link access (no auth required)

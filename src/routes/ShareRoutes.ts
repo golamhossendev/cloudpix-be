@@ -156,6 +156,57 @@ async function getShareLinksByFileId(req: AuthRequest, res: IRes) {
   }
 }
 
+/**
+ * Get all share links for the authenticated user
+ */
+async function getUserShareLinks(req: AuthRequest, res: IRes) {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(HTTP_STATUS_CODES.Unauthorized).json({
+        error: 'User not authenticated',
+      });
+    }
+    
+    const shareLinks = await ShareLinkService.getUserShareLinks(userId);
+    
+    // Add share URLs to each link and fetch file info
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const FileRepo = (await import('@src/repos/CosmosFileRepo')).default;
+    
+    const shareLinksWithDetails = await Promise.all(
+      shareLinks.map(async (link) => {
+        try {
+          const file = await FileRepo.getFileById(link.fileId);
+          return {
+            ...link,
+            shareUrl: `${frontendUrl}/share/${link.linkId}`,
+            file: file ? {
+              fileId: file.fileId,
+              fileName: file.fileName,
+              contentType: file.contentType,
+              fileSize: file.fileSize,
+              uploadDate: file.uploadDate,
+            } : null,
+          };
+        } catch {
+          return {
+            ...link,
+            shareUrl: `${frontendUrl}/share/${link.linkId}`,
+            file: null,
+          };
+        }
+      })
+    );
+
+    res.status(HTTP_STATUS_CODES.Ok).json({ shareLinks: shareLinksWithDetails });
+  } catch (error: any) {
+    res.status(HTTP_STATUS_CODES.InternalServerError).json({
+      error: error.message || 'Failed to get user share links',
+    });
+  }
+}
+
 /******************************************************************************
                                 Export default
 ******************************************************************************/
@@ -165,5 +216,6 @@ export default {
   getByLinkId: getFileByShareLink,
   revoke: [authenticate, revokeShareLink],
   getByFileId: [authenticate, getShareLinksByFileId],
+  getUserShareLinks: [authenticate, getUserShareLinks],
 } as const;
 

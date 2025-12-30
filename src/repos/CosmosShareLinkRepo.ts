@@ -203,6 +203,37 @@ export const deleteShareLinksByFileId = async (
 };
 
 /**
+ * Get all share links for a user
+ */
+export const getShareLinksByUserId = async (
+  userId: string,
+): Promise<IShareLink[]> => {
+  try {
+    const container = await getContainer(
+      CONTAINER_NAMES.SHARE_LINKS,
+      '/linkId',
+    );
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.userId = @userId',
+      parameters: [
+        {
+          name: '@userId',
+          value: userId,
+        },
+      ],
+    };
+
+    const { resources } = await container.items
+      .query<IShareLink>(querySpec)
+      .fetchAll();
+    return resources;
+  } catch (error) {
+    logger.err(error);
+    throw new Error('Failed to get share links for user');
+  }
+};
+
+/**
  * Check if share link is valid (not expired, not revoked)
  */
 export const isShareLinkValid = (shareLink: IShareLink): boolean => {
@@ -225,6 +256,7 @@ export default {
   createShareLink,
   getShareLinkById,
   getShareLinksByFileId,
+  getShareLinksByUserId,
   updateShareLink,
   revokeShareLink,
   incrementAccessCount,
