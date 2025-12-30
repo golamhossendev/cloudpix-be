@@ -114,6 +114,54 @@ export const getFileById = async (fileId: string, userId: string): Promise<IFile
 };
 
 /**
+ * Update a file (rename)
+ */
+export const updateFile = async (fileId: string, userId: string, fileName: string): Promise<IFile> => {
+  try {
+    // Get file
+    const file = await FileRepo.getFileById(fileId);
+    
+    if (!file) {
+      throw new Error('File not found');
+    }
+
+    // Verify ownership
+    if (file.userId !== userId) {
+      throw new Error('Unauthorized access to file');
+    }
+
+    // Validate new fileName
+    if (!fileName || fileName.trim().length === 0) {
+      throw new Error('File name cannot be empty');
+    }
+
+    // Update fileName
+    const updatedFile: IFile = {
+      ...file,
+      fileName: fileName.trim(),
+    };
+
+    const result = await FileRepo.updateFile(updatedFile);
+
+    trackEvent('file_update_success', {
+      userId,
+      fileId,
+      newFileName: fileName,
+    });
+
+    return result;
+  } catch (error: any) {
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      operation: 'update_file',
+      fileId,
+      userId,
+    });
+    logger.err(error);
+    throw error;
+  }
+};
+
+/**
  * Delete a file
  */
 export const deleteFile = async (fileId: string, userId: string): Promise<void> => {
@@ -169,6 +217,7 @@ export default {
   uploadFile,
   getUserFiles,
   getFileById,
+  updateFile,
   deleteFile,
 };
 

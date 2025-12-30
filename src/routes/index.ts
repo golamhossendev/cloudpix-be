@@ -25,7 +25,12 @@ apiRouter.use('/auth', authRouter);
 const fileRouter = Router();
 fileRouter.post('/upload', ...FileRoutes.upload);
 fileRouter.get('/', ...FileRoutes.getAll);
+// File share creation and listing (requires auth) - register before /:id routes
+fileRouter.post('/:id/share', ...ShareRoutes.create);
+fileRouter.get('/:id/share-links', ...ShareRoutes.getByFileId);
+// Generic file routes - must come after more specific routes
 fileRouter.get('/:id', ...FileRoutes.getById);
+fileRouter.put('/:id', ...FileRoutes.update);
 fileRouter.delete('/:id', ...FileRoutes.delete);
 apiRouter.use('/files', fileRouter);
 
@@ -36,12 +41,6 @@ apiRouter.use('/share', shareRouter);
 
 // Share link access (no auth required)
 apiRouter.get('/share/:linkId', ShareRoutes.getByLinkId);
-
-// File share creation and listing (requires auth)
-const fileShareRouter = Router();
-fileShareRouter.post('/:id/share', ...ShareRoutes.create);
-fileShareRouter.get('/:id/share-links', ...ShareRoutes.getByFileId);
-apiRouter.use('/files', fileShareRouter);
 
 // ** User Routes (legacy - keeping for compatibility) ** //
 const userRouter = Router();
