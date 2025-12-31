@@ -4,10 +4,6 @@ import { IFile } from '@src/models/File';
 import logger from 'jet-logger';
 import { CONTAINER_NAMES } from '@src/common/constants';
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * Create a new file record
  */
@@ -44,7 +40,9 @@ export const getFileById = async (fileId: string): Promise<IFile | null> => {
       ],
     };
 
-    const { resources } = await container.items.query<IFile>(querySpec).fetchAll();
+    const { resources } = await container.items
+      .query<IFile>(querySpec)
+      .fetchAll();
     return resources.length > 0 ? resources[0] : null;
   } catch (error: any) {
     if (error.code === 404) {
@@ -154,10 +152,6 @@ export const hardDeleteFile = async (fileId: string): Promise<void> => {
     }
   }
 };
-
-/******************************************************************************
-                            Export default
-******************************************************************************/
 
 export default {
   createFile,

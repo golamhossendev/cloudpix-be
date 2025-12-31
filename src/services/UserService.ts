@@ -4,15 +4,7 @@ import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import UserRepo from '@src/repos/UserRepo';
 import { IUser } from '@src/models/User';
 
-/******************************************************************************
-                                Constants
-******************************************************************************/
-
 export const USER_NOT_FOUND_ERR = 'User not found';
-
-/******************************************************************************
-                                Functions
-******************************************************************************/
 
 /**
  * Get all users.
@@ -36,10 +28,7 @@ async function updateOne(user: IUser): Promise<void> {
   // This function should use CosmosUserRepo instead
   const persists = await UserRepo.persists(0); // Legacy code, not used
   if (!persists) {
-    throw new RouteError(
-      HTTP_STATUS_CODES.NotFound,
-      USER_NOT_FOUND_ERR,
-    );
+    throw new RouteError(HTTP_STATUS_CODES.NotFound, USER_NOT_FOUND_ERR);
   }
   // Return user
   return UserRepo.update(user);
@@ -51,18 +40,11 @@ async function updateOne(user: IUser): Promise<void> {
 async function _delete(id: number): Promise<void> {
   const persists = await UserRepo.persists(id);
   if (!persists) {
-    throw new RouteError(
-      HTTP_STATUS_CODES.NotFound,
-      USER_NOT_FOUND_ERR,
-    );
+    throw new RouteError(HTTP_STATUS_CODES.NotFound, USER_NOT_FOUND_ERR);
   }
   // Delete user
   return UserRepo.delete(id);
 }
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default {
   getAll,

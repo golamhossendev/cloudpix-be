@@ -3,17 +3,9 @@ import ShareLinkService from '@src/services/ShareLinkService';
 import { IReq, IRes } from './common/types';
 import { authenticate, AuthRequest } from '@src/middleware/auth';
 
-/******************************************************************************
-                                 Types
-******************************************************************************/
-
 interface CreateShareLinkRequest {
   expirationDays?: number;
 }
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * Create a share link for a file
@@ -49,8 +41,8 @@ async function createShareLink(req: AuthRequest, res: IRes) {
       shareUrl, // Include the shareable URL
     });
   } catch (error: any) {
-    const status = error.message.includes('not found') 
-      ? HTTP_STATUS_CODES.NotFound 
+    const status = error.message.includes('not found')
+      ? HTTP_STATUS_CODES.NotFound
       : error.message.includes('Unauthorized')
       ? HTTP_STATUS_CODES.Unauthorized
       : HTTP_STATUS_CODES.BadRequest;
@@ -74,8 +66,8 @@ async function getFileByShareLink(req: IReq, res: IRes) {
     const result = await ShareLinkService.getFileByShareLink(linkId);
     res.status(HTTP_STATUS_CODES.Ok).json(result);
   } catch (error: any) {
-    const status = error.message.includes('not found') 
-      ? HTTP_STATUS_CODES.NotFound 
+    const status = error.message.includes('not found')
+      ? HTTP_STATUS_CODES.NotFound
       : error.message.includes('expired') || error.message.includes('revoked')
       ? HTTP_STATUS_CODES.Gone
       : HTTP_STATUS_CODES.BadRequest;
@@ -103,10 +95,12 @@ async function revokeShareLink(req: AuthRequest, res: IRes) {
       });
     }
     await ShareLinkService.revokeShareLink(linkId, userId);
-    res.status(HTTP_STATUS_CODES.Ok).json({ message: 'Share link revoked successfully' });
+    res
+      .status(HTTP_STATUS_CODES.Ok)
+      .json({ message: 'Share link revoked successfully' });
   } catch (error: any) {
-    const status = error.message.includes('not found') 
-      ? HTTP_STATUS_CODES.NotFound 
+    const status = error.message.includes('not found')
+      ? HTTP_STATUS_CODES.NotFound
       : error.message.includes('Unauthorized')
       ? HTTP_STATUS_CODES.Unauthorized
       : HTTP_STATUS_CODES.BadRequest;
@@ -133,20 +127,23 @@ async function getShareLinksByFileId(req: AuthRequest, res: IRes) {
         error: 'File ID is required',
       });
     }
-    
-    const shareLinks = await ShareLinkService.getShareLinksByFileId(fileId, userId);
-    
+
+    const shareLinks = await ShareLinkService.getShareLinksByFileId(
+      fileId,
+      userId,
+    );
+
     // Add share URLs to each link
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const shareLinksWithUrls = shareLinks.map(link => ({
+    const shareLinksWithUrls = shareLinks.map((link) => ({
       ...link,
       shareUrl: `${frontendUrl}/share/${link.linkId}`,
     }));
 
     res.status(HTTP_STATUS_CODES.Ok).json({ shareLinks: shareLinksWithUrls });
   } catch (error: any) {
-    const status = error.message.includes('not found') 
-      ? HTTP_STATUS_CODES.NotFound 
+    const status = error.message.includes('not found')
+      ? HTTP_STATUS_CODES.NotFound
       : error.message.includes('Unauthorized')
       ? HTTP_STATUS_CODES.Unauthorized
       : HTTP_STATUS_CODES.BadRequest;
@@ -167,13 +164,13 @@ async function getUserShareLinks(req: AuthRequest, res: IRes) {
         error: 'User not authenticated',
       });
     }
-    
+
     const shareLinks = await ShareLinkService.getUserShareLinks(userId);
-    
+
     // Add share URLs to each link and fetch file info
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const FileRepo = (await import('@src/repos/CosmosFileRepo')).default;
-    
+
     const shareLinksWithDetails = await Promise.all(
       shareLinks.map(async (link) => {
         try {
@@ -181,13 +178,15 @@ async function getUserShareLinks(req: AuthRequest, res: IRes) {
           return {
             ...link,
             shareUrl: `${frontendUrl}/share/${link.linkId}`,
-            file: file ? {
-              fileId: file.fileId,
-              fileName: file.fileName,
-              contentType: file.contentType,
-              fileSize: file.fileSize,
-              uploadDate: file.uploadDate,
-            } : null,
+            file: file
+              ? {
+                  fileId: file.fileId,
+                  fileName: file.fileName,
+                  contentType: file.contentType,
+                  fileSize: file.fileSize,
+                  uploadDate: file.uploadDate,
+                }
+              : null,
           };
         } catch {
           return {
@@ -196,20 +195,18 @@ async function getUserShareLinks(req: AuthRequest, res: IRes) {
             file: null,
           };
         }
-      })
+      }),
     );
 
-    res.status(HTTP_STATUS_CODES.Ok).json({ shareLinks: shareLinksWithDetails });
+    res
+      .status(HTTP_STATUS_CODES.Ok)
+      .json({ shareLinks: shareLinksWithDetails });
   } catch (error: any) {
     res.status(HTTP_STATUS_CODES.InternalServerError).json({
       error: error.message || 'Failed to get user share links',
     });
   }
 }
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default {
   create: [authenticate, createShareLink],
@@ -218,4 +215,3 @@ export default {
   getByFileId: [authenticate, getShareLinksByFileId],
   getUserShareLinks: [authenticate, getUserShareLinks],
 } as const;
-

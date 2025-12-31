@@ -4,10 +4,6 @@ import { IShareLink } from '@src/models/ShareLink';
 import logger from 'jet-logger';
 import { CONTAINER_NAMES } from '@src/common/constants';
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * Create a new share link
  */
@@ -247,10 +243,6 @@ export const isShareLinkValid = (shareLink: IShareLink): boolean => {
 
   return true;
 };
-
-/******************************************************************************
-                            Export default
-******************************************************************************/
 
 export default {
   createShareLink,

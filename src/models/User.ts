@@ -19,10 +19,6 @@ export interface IUser {
   lastLogin?: Date;
 }
 
-/******************************************************************************
-                                  Setup
-******************************************************************************/
-
 // Initialize the "parseUser" function
 const parseUser = parseObject<IUser>({
   userId: isString,
@@ -32,17 +28,13 @@ const parseUser = parseObject<IUser>({
   lastLogin: (arg: unknown) => arg === undefined || transformIsDate(arg),
 });
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * New user object.
  */
 function __new__(user?: Partial<IUser>): IUser {
   const defaults = { ...DEFAULT_USER_VALS };
   defaults.createdDate = new Date();
-  return parseUser({ ...defaults, ...user }, errors => {
+  return parseUser({ ...defaults, ...user }, (errors) => {
     throw new Error('Setup new user failed ' + JSON.stringify(errors, null, 2));
   });
 }
@@ -53,10 +45,6 @@ function __new__(user?: Partial<IUser>): IUser {
 function test(arg: unknown, errCb?: TParseOnError): arg is IUser {
   return !!parseUser(arg, errCb);
 }
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default {
   new: __new__,

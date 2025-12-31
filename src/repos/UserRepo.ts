@@ -13,10 +13,6 @@ interface LegacyUser extends IUser {
   created?: Date;
 }
 
-/******************************************************************************
-                                Functions
-******************************************************************************/
-
 /**
  * Get one user.
  */
@@ -92,12 +88,11 @@ async function delete_(id: number): Promise<void> {
   }
 }
 
-
 // **** Unit-Tests Only **** //
 
 /**
  * Delete every user record.
- * 
+ *
  * @internal
  * Test-only helper. Do not use in production code.
  */
@@ -108,29 +103,23 @@ async function deleteAllUsers(): Promise<void> {
 }
 
 /**
- * Insert multiple users. Can't do multiple at once cause using a plain file 
+ * Insert multiple users. Can't do multiple at once cause using a plain file
  * for now.
- * 
+ *
  * @internal
  * Test-only helper. Do not use in production code.
  */
-async function insertMult(
-  users: IUser[] | readonly IUser[],
-): Promise<IUser[]> {
+async function insertMult(users: IUser[] | readonly IUser[]): Promise<IUser[]> {
   const db = await orm.openDb(),
-    usersF = [ ...users ] as LegacyUser[];
+    usersF = [...users] as LegacyUser[];
   for (const user of usersF) {
     user.id = getRandomInt();
     user.created = new Date();
   }
-  db.users = [ ...db.users, ...users ];
+  db.users = [...db.users, ...users];
   await orm.saveDb(db);
   return usersF;
 }
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default {
   getOne,

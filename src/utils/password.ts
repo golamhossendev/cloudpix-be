@@ -1,15 +1,7 @@
 import bcrypt from 'bcrypt';
 import logger from 'jet-logger';
 
-/******************************************************************************
-                                 Constants
-******************************************************************************/
-
 const SALT_ROUNDS = 10;
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * Hash a password
@@ -28,7 +20,7 @@ export const hashPassword = async (password: string): Promise<string> => {
  */
 export const comparePassword = async (
   password: string,
-  hash: string
+  hash: string,
 ): Promise<boolean> => {
   try {
     return await bcrypt.compare(password, hash);
@@ -38,12 +30,9 @@ export const comparePassword = async (
   }
 };
 
-/******************************************************************************
-                            Export default
-******************************************************************************/
+ 
 
 export default {
   hashPassword,
   comparePassword,
 };
-

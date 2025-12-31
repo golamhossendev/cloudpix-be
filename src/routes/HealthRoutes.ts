@@ -1,10 +1,6 @@
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import { IReq, IRes } from './common/types';
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * Health check endpoint
  */
@@ -16,10 +12,6 @@ function health(_: IReq, res: IRes) {
     service: 'CloudPix API',
   });
 }
-
-/******************************************************************************
-                                Export default
-******************************************************************************/
 
 export default {
   health,

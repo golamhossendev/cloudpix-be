@@ -140,10 +140,7 @@ export const updateLastLogin = async (userId: string): Promise<void> => {
     throw new Error('Failed to update last login');
   }
 };
-
-/******************************************************************************
-                            Export default
-******************************************************************************/
+ 
 
 export default {
   createUser,

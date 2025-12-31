@@ -1,26 +1,15 @@
 import jwt from 'jsonwebtoken';
 import logger from 'jet-logger';
 
-/******************************************************************************
-                                 Constants
-******************************************************************************/
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 // Set to maximum expiration: 10 years (3650 days)
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '3650d';
-
-/******************************************************************************
-                                 Types
-******************************************************************************/
 
 export interface JWTPayload {
   userId: string;
   email: string;
 }
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * Generate a JWT token
@@ -59,7 +48,9 @@ export const verifyToken = (token: string): JWTPayload => {
 /**
  * Extract token from Authorization header
  */
-export const extractTokenFromHeader = (authHeader: string | undefined): string | null => {
+export const extractTokenFromHeader = (
+  authHeader: string | undefined,
+): string | null => {
   if (!authHeader) {
     return null;
   }
@@ -72,13 +63,8 @@ export const extractTokenFromHeader = (authHeader: string | undefined): string |
   return parts[1];
 };
 
-/******************************************************************************
-                            Export default
-******************************************************************************/
-
 export default {
   generateToken,
   verifyToken,
   extractTokenFromHeader,
 };
-

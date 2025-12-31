@@ -4,6 +4,17 @@ import logger from 'jet-logger';
 let isInitialized = false;
 
 /**
+ * Validate Application Insights connection string format
+ */
+const isValidConnectionString = (connectionString: string): boolean => {
+  // Connection string should contain InstrumentationKey and IngestionEndpoint
+  return (
+    connectionString.includes('InstrumentationKey=') &&
+    connectionString.includes('IngestionEndpoint=')
+  );
+};
+
+/**
  * Initialize Application Insights
  */
 export const initializeAppInsights = (): void => {
@@ -11,6 +22,15 @@ export const initializeAppInsights = (): void => {
 
   if (!connectionString) {
     logger.warn('Application Insights connection string not provided. Monitoring disabled.');
+    return;
+  }
+
+  // Validate connection string format
+  if (!isValidConnectionString(connectionString)) {
+    logger.warn(
+      'Application Insights connection string format appears invalid. ' +
+      'Expected format: InstrumentationKey=...;IngestionEndpoint=...;...'
+    );
     return;
   }
 
@@ -26,10 +46,21 @@ export const initializeAppInsights = (): void => {
       .start();
 
     isInitialized = true;
-    logger.info('Application Insights initialized');
+    
+    // Extract InstrumentationKey for logging (without exposing full connection string)
+    const instrumentationKeyRegex = /InstrumentationKey=([^;]+)/;
+    const instrumentationKeyMatch = instrumentationKeyRegex.exec(connectionString);
+    const instrumentationKey = instrumentationKeyMatch 
+      ? `${instrumentationKeyMatch[1].substring(0, 8)}...` 
+      : 'unknown';
+    
+    logger.info(
+      `Application Insights initialized successfully. ` +
+      `InstrumentationKey: ${instrumentationKey}`
+    );
   } catch (error) {
     logger.err(error);
-    logger.warn('Failed to initialize Application Insights');
+    logger.warn('Failed to initialize Application Insights. Monitoring will be disabled.');
   }
 };
 
@@ -124,6 +155,13 @@ export const trackTrace = (message: string, severityLevel?: number): void => {
   }
 };
 
+/**
+ * Check if Application Insights is initialized and ready
+ */
+export const isAppInsightsReady = (): boolean => {
+  return isInitialized;
+};
+
 export default {
   initializeAppInsights,
   trackEvent,
@@ -131,5 +169,6 @@ export default {
   trackException,
   trackDependency,
   trackTrace,
+  isAppInsightsReady,
 };
 

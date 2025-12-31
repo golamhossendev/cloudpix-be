@@ -3,22 +3,17 @@ import ShareLinkRepo from '@src/repos/CosmosShareLinkRepo';
 import FileRepo from '@src/repos/CosmosFileRepo';
 import { getBlobUrl } from '@src/services/azure/BlobService';
 import { IShareLink } from '@src/models/ShareLink';
-import { trackEvent, trackException } from '@src/services/azure/AppInsightsService';
+import {
+  trackEvent,
+  trackException,
+} from '@src/services/azure/AppInsightsService';
 import logger from 'jet-logger';
-
-/******************************************************************************
-                                 Types
-******************************************************************************/
 
 export interface CreateShareLinkData {
   fileId: string;
   userId: string;
   expirationDays?: number; // Optional: 1, 7, 30, or never (undefined)
 }
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * Calculate expiry date based on expiration days
@@ -42,7 +37,9 @@ const calculateTTL = (expiryDate?: Date): number | undefined => {
   }
 
   const now = new Date();
-  const diffInSeconds = Math.floor((expiryDate.getTime() - now.getTime()) / 1000);
+  const diffInSeconds = Math.floor(
+    (expiryDate.getTime() - now.getTime()) / 1000,
+  );
   return diffInSeconds > 0 ? diffInSeconds : undefined;
 };
 
@@ -50,7 +47,7 @@ const calculateTTL = (expiryDate?: Date): number | undefined => {
  * Create a share link
  */
 export const createShareLink = async (
-  data: CreateShareLinkData
+  data: CreateShareLinkData,
 ): Promise<IShareLink> => {
   try {
     // Verify file exists and user owns it
@@ -106,14 +103,16 @@ export const createShareLink = async (
 /**
  * Get file via share link and generate SAS URL for blob access
  */
-export const getFileByShareLink = async (linkId: string): Promise<{
+export const getFileByShareLink = async (
+  linkId: string,
+): Promise<{
   file: any;
   shareLink: IShareLink;
   downloadUrl: string; // SAS URL for blob access
 }> => {
   try {
     const shareLink = await ShareLinkRepo.getShareLinkById(linkId);
-    
+
     if (!shareLink) {
       throw new Error('Share link not found');
     }
@@ -135,13 +134,18 @@ export const getFileByShareLink = async (linkId: string): Promise<{
     const urlWithoutQuery = file.blobUrl.split('?')[0];
     const blobUrlParts = urlWithoutQuery.split('/');
     // Get last 3 parts: userId/fileId/fileName (skip container name)
-    const containerIndex = blobUrlParts.findIndex(part => part.includes('.blob.core.windows.net'));
+    const containerIndex = blobUrlParts.findIndex((part) =>
+      part.includes('.blob.core.windows.net'),
+    );
     const blobName = blobUrlParts.slice(containerIndex + 2).join('/'); // Skip account and container
 
     // Generate SAS URL with expiration matching share link expiry or 24 hours, whichever is shorter
     const now = new Date();
     const expiryDate = new Date(shareLink.expiryDate);
-    const hoursUntilExpiry = Math.max(1, Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60)));
+    const hoursUntilExpiry = Math.max(
+      1,
+      Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60)),
+    );
     const sasExpirationHours = Math.min(hoursUntilExpiry, 24); // Max 24 hours, or until share link expires
     const sasUrl = getBlobUrl(blobName, sasExpirationHours);
 
@@ -173,11 +177,11 @@ export const getFileByShareLink = async (linkId: string): Promise<{
  */
 export const revokeShareLink = async (
   linkId: string,
-  userId: string
+  userId: string,
 ): Promise<void> => {
   try {
     const shareLink = await ShareLinkRepo.getShareLinkById(linkId);
-    
+
     if (!shareLink) {
       throw new Error('Share link not found');
     }
@@ -210,7 +214,7 @@ export const revokeShareLink = async (
  */
 export const getShareLinksByFileId = async (
   fileId: string,
-  userId: string
+  userId: string,
 ): Promise<IShareLink[]> => {
   try {
     // Verify file exists and user owns it
@@ -224,7 +228,7 @@ export const getShareLinksByFileId = async (
     }
 
     const shareLinks = await ShareLinkRepo.getShareLinksByFileId(fileId);
-    
+
     trackEvent('share_links_listed', {
       userId,
       fileId,
@@ -247,11 +251,11 @@ export const getShareLinksByFileId = async (
  * Get all share links for a user
  */
 export const getUserShareLinks = async (
-  userId: string
+  userId: string,
 ): Promise<IShareLink[]> => {
   try {
     const shareLinks = await ShareLinkRepo.getShareLinksByUserId(userId);
-    
+
     trackEvent('user_share_links_listed', {
       userId,
       count: String(shareLinks.length),
@@ -268,10 +272,6 @@ export const getUserShareLinks = async (
   }
 };
 
-/******************************************************************************
-                            Export default
-******************************************************************************/
-
 export default {
   createShareLink,
   getFileByShareLink,
@@ -279,4 +279,3 @@ export default {
   getShareLinksByFileId,
   getUserShareLinks,
 };
-

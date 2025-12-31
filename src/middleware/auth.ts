@@ -3,18 +3,10 @@ import { verifyToken, extractTokenFromHeader } from '@src/utils/jwt';
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import { RouteError } from '@src/common/util/route-errors';
 
-/******************************************************************************
-                                 Types
-******************************************************************************/
-
 export interface AuthRequest extends Request {
   userId?: string;
   userEmail?: string;
 }
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * JWT authentication middleware
@@ -22,7 +14,7 @@ export interface AuthRequest extends Request {
 export const authenticate = (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   try {
     const authHeader = req.headers.authorization;
@@ -31,7 +23,7 @@ export const authenticate = (
     if (!token) {
       throw new RouteError(
         HTTP_STATUS_CODES.Unauthorized,
-        'Authentication required'
+        'Authentication required',
       );
     }
 
@@ -46,16 +38,11 @@ export const authenticate = (
     }
     throw new RouteError(
       HTTP_STATUS_CODES.Unauthorized,
-      'Invalid or expired token'
+      'Invalid or expired token',
     );
   }
 };
 
-/******************************************************************************
-                            Export default
-******************************************************************************/
-
 export default {
   authenticate,
 };
-

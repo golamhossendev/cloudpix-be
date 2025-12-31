@@ -3,12 +3,12 @@ import FileRepo from '@src/repos/CosmosFileRepo';
 import ShareLinkRepo from '@src/repos/CosmosShareLinkRepo';
 import { uploadBlob, deleteBlob } from '@src/services/azure/BlobService';
 import { IFile } from '@src/models/File';
-import { trackEvent, trackException, trackMetric } from '@src/services/azure/AppInsightsService';
+import {
+  trackEvent,
+  trackException,
+  trackMetric,
+} from '@src/services/azure/AppInsightsService';
 import logger from 'jet-logger';
-
-/******************************************************************************
-                                 Types
-******************************************************************************/
 
 export interface UploadFileData {
   userId: string;
@@ -17,10 +17,6 @@ export interface UploadFileData {
   fileSize: number;
   buffer: Buffer;
 }
-
-/******************************************************************************
-                                 Functions
-******************************************************************************/
 
 /**
  * Upload a file
@@ -88,10 +84,13 @@ export const getUserFiles = async (userId: string): Promise<IFile[]> => {
 /**
  * Get file by ID
  */
-export const getFileById = async (fileId: string, userId: string): Promise<IFile> => {
+export const getFileById = async (
+  fileId: string,
+  userId: string,
+): Promise<IFile> => {
   try {
     const file = await FileRepo.getFileById(fileId);
-    
+
     if (!file) {
       throw new Error('File not found');
     }
@@ -116,11 +115,15 @@ export const getFileById = async (fileId: string, userId: string): Promise<IFile
 /**
  * Update a file (rename)
  */
-export const updateFile = async (fileId: string, userId: string, fileName: string): Promise<IFile> => {
+export const updateFile = async (
+  fileId: string,
+  userId: string,
+  fileName: string,
+): Promise<IFile> => {
   try {
     // Get file
     const file = await FileRepo.getFileById(fileId);
-    
+
     if (!file) {
       throw new Error('File not found');
     }
@@ -164,11 +167,14 @@ export const updateFile = async (fileId: string, userId: string, fileName: strin
 /**
  * Delete a file
  */
-export const deleteFile = async (fileId: string, userId: string): Promise<void> => {
+export const deleteFile = async (
+  fileId: string,
+  userId: string,
+): Promise<void> => {
   try {
     // Get file
     const file = await FileRepo.getFileById(fileId);
-    
+
     if (!file) {
       throw new Error('File not found');
     }
@@ -185,7 +191,9 @@ export const deleteFile = async (fileId: string, userId: string): Promise<void> 
     try {
       await deleteBlob(blobName);
     } catch {
-      logger.warn(`Failed to delete blob ${blobName}, continuing with metadata deletion`);
+      logger.warn(
+        `Failed to delete blob ${blobName}, continuing with metadata deletion`,
+      );
     }
 
     // Delete all share links for this file (cascade delete)
@@ -209,10 +217,6 @@ export const deleteFile = async (fileId: string, userId: string): Promise<void> 
   }
 };
 
-/******************************************************************************
-                            Export default
-******************************************************************************/
-
 export default {
   uploadFile,
   getUserFiles,
@@ -220,4 +224,3 @@ export default {
   updateFile,
   deleteFile,
 };
-

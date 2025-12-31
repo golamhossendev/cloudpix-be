@@ -3,10 +3,6 @@ import { parseObject, TParseOnError } from 'jet-validators/utils';
 
 import { transformIsDate } from '@src/common/util/validators';
 
-/******************************************************************************
-                                 Constants
-******************************************************************************/
-
 const DEFAULT_SHARE_LINK_VALS: IShareLink = {
   linkId: '',
   fileId: '',
@@ -16,10 +12,6 @@ const DEFAULT_SHARE_LINK_VALS: IShareLink = {
   createdDate: new Date(),
   isRevoked: false,
 } as const;
-
-/******************************************************************************
-                                 Types
-******************************************************************************/
 
 export interface IShareLink {
   linkId: string; // GUID, partition key
@@ -31,10 +23,6 @@ export interface IShareLink {
   isRevoked: boolean;
   ttl?: number; // Time to live in seconds for Cosmos DB TTL
 }
-
-/******************************************************************************
-                                 Setup
-******************************************************************************/
 
 // Initialize the "parseShareLink" function
 const parseShareLink = parseObject<IShareLink>({
@@ -48,10 +36,6 @@ const parseShareLink = parseObject<IShareLink>({
   ttl: (arg: unknown) => arg === undefined || typeof arg === 'number',
 });
 
-/******************************************************************************
-                                 Functions
-******************************************************************************/
-
 /**
  * New share link object.
  */
@@ -60,8 +44,10 @@ function __new__(shareLink?: Partial<IShareLink>): IShareLink {
   defaults.createdDate = new Date();
   defaults.isRevoked = false;
   defaults.accessCount = 0;
-  return parseShareLink({ ...defaults, ...shareLink }, errors => {
-    throw new Error('Setup new share link failed ' + JSON.stringify(errors, null, 2));
+  return parseShareLink({ ...defaults, ...shareLink }, (errors) => {
+    throw new Error(
+      'Setup new share link failed ' + JSON.stringify(errors, null, 2),
+    );
   });
 }
 
@@ -72,12 +58,7 @@ function test(arg: unknown, errCb?: TParseOnError): arg is IShareLink {
   return !!parseShareLink(arg, errCb);
 }
 
-/******************************************************************************
-                                Export default
-******************************************************************************/
-
 export default {
   new: __new__,
   test,
 } as const;
-
